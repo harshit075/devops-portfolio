@@ -6,7 +6,7 @@ const skillCategories = [
   {
     title: "Cloud Services (AWS)",
     iconSlugs: ["amazonwebservices"],
-    skills: ["EC2", "RDS", "Amplify", "Lambda", "Lightsail", "S3", "CloudWatch"],
+    skills: ["EC2", "S3", "RDS", "VPC", "IAM", "EKS", "ECS", "Lambda", "Amplify", "CloudWatch", "CloudFront", "Route53"],
   },
   {
     title: "CI/CD Pipelines",
