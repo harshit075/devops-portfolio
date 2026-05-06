@@ -12,7 +12,7 @@ export function LiveMetrics() {
   const [users, setUsers] = useState(1);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const apiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
     const eventSource = new EventSource(`${apiUrl}/api/telemetry`);
 
     eventSource.onmessage = (event) => {
