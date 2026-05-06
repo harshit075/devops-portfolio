@@ -85,7 +85,7 @@ export function Hero() {
   }, [isNameHovered]);
 
   return (
-    <section className="relative h-screen flex flex-col justify-center items-center px-6 md:px-20 overflow-hidden">
+    <section id="hero" className="relative h-screen flex flex-col justify-center items-center px-6 md:px-20 overflow-hidden">
       {/* Engaging Background Grid & Glow */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border-color)_1px,transparent_1px),linear-gradient(to_bottom,var(--border-color)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_10%,transparent_100%)] opacity-20 pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan/10 blur-[120px] rounded-full pointer-events-none z-0" />

@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ArrowUpRight } from "lucide-react";
+import profileImage from "@/assests/1 (1).jpeg";
 
 export function About() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,7 +15,7 @@ export function About() {
   const yBg = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
 
   return (
-    <section ref={containerRef} className="relative w-full min-h-screen py-32 overflow-hidden bg-background">
+    <section id="about" ref={containerRef} className="relative w-full min-h-screen py-32 overflow-hidden bg-background">
       <motion.div
         className="absolute top-[20%] right-[-10%] text-[20vw] font-black text-black/[0.03] dark:text-white/[0.03] select-none whitespace-nowrap pointer-events-none tracking-tighter z-0"
         style={{ y: yBg }}
@@ -41,7 +42,7 @@ export function About() {
             className="flex flex-col space-y-8"
           >
             <p className="text-xl md:text-2xl font-medium leading-relaxed">
-              Hi there. I&apos;m <span className="text-cyan bg-foreground px-2 inline-block -rotate-2">Harshit</span>, a DevOps Engineer focused on building robust, scalable infrastructure and seamless deployment pipelines.
+              Hi there. I&apos;m <span className="text-cyan font-black text-2xl inline-block -rotate-2">Harshit</span>, a DevOps Engineer focused on building robust, scalable infrastructure and seamless deployment pipelines.
             </p>
             
             <p className="text-lg md:text-xl text-text-muted leading-relaxed">
@@ -71,17 +72,28 @@ export function About() {
             whileInView={{ opacity: 1, x: 0, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="w-full flex justify-center lg:justify-end"
+            className="w-full flex justify-center lg:justify-end items-center"
           >
-            <div className="relative w-full max-w-md aspect-[3/4] bg-bg-secondary overflow-hidden group border border-transparent hover:border-cyan/50 transition-colors duration-500 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)]">
-              <div className="absolute inset-0 z-10 bg-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-              {/* Image Placeholder */}
-              <img 
-                src="/avatar.png" 
-                alt="Harshit Borana Portrait" 
-                className="w-full h-full object-cover grayscale transition-transform duration-700 ease-in-out group-hover:scale-105 group-hover:grayscale-0"
+            <div className="relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 group mt-8 lg:mt-0">
+              {/* Rotating outer dashed ring */}
+              <div 
+                className="absolute inset-0 rounded-full border-2 border-dashed border-cyan/30 group-hover:border-cyan/80 group-hover:shadow-[0_0_20px_rgba(0,255,255,0.2)] transition-all duration-500"
+                style={{ animation: 'spin 20s linear infinite' }}
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-foreground/10 to-transparent pointer-events-none" />
+              
+              {/* Inner solid ring */}
+              <div className="absolute inset-3 rounded-full border border-cyan/20 group-hover:border-cyan/50 transition-colors duration-500" />
+              
+              {/* Image Container */}
+              <div className="absolute inset-6 rounded-full overflow-hidden bg-bg-secondary border border-border-color group-hover:border-cyan shadow-xl">
+                <img 
+                  src={profileImage} 
+                  alt="Harshit Borana Portrait" 
+                  className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
+                />
+                {/* Cyberpunk accent glow */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-cyan/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              </div>
             </div>
           </motion.div>
         </div>

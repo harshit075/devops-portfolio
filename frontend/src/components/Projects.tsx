@@ -85,7 +85,7 @@ export function Projects() {
   const yBg = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
 
   return (
-    <section ref={containerRef} className="relative w-full min-h-screen py-32 overflow-hidden bg-background">
+    <section id="projects" ref={containerRef} className="relative w-full min-h-screen py-32 overflow-hidden bg-background">
       <motion.div
         className="absolute top-0 right-[-10%] text-[20vw] font-black text-black/[0.03] dark:text-white/[0.03] select-none whitespace-nowrap pointer-events-none tracking-tighter"
         style={{ y: yBg }}
