@@ -28,6 +28,16 @@ export function PipelineLoader({ onComplete }: { onComplete: () => void }) {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter") {
+        onComplete();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onComplete]);
+
+  useEffect(() => {
     if (currentStage < stages.length) {
       // Fast typing effect for fake logs
       const logInterval = setInterval(() => {
@@ -61,6 +71,14 @@ export function PipelineLoader({ onComplete }: { onComplete: () => void }) {
       transition={{ duration: 0.8, ease: "easeInOut" }}
       className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex flex-col items-center justify-center font-mono text-sm p-4 md:p-8"
     >
+      {/* Skip Button */}
+      <button 
+        onClick={onComplete}
+        className="absolute top-6 right-6 md:top-8 md:right-8 text-[#8b949e] hover:text-[#c9d1d9] text-xs font-mono uppercase tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2 rounded transition-colors border border-white/5 flex items-center gap-2 z-50 cursor-pointer"
+      >
+        Skip <span className="text-[#58a6ff] border border-[#58a6ff]/30 px-1.5 rounded text-[10px]">ESC</span>
+      </button>
+
       <div className="w-full max-w-3xl rounded-xl overflow-hidden bg-[#0d1117] border border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)] flex flex-col">
         {/* Terminal Header */}
         <div className="h-10 bg-[#161b22] border-b border-white/5 flex items-center px-4 relative">

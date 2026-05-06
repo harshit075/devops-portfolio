@@ -8,34 +8,29 @@ export function LiveMetrics() {
   const [cpu, setCpu] = useState(25);
   const [cpuHistory, setCpuHistory] = useState<number[]>(Array(20).fill(25));
   const [memory, setMemory] = useState(3.4);
-  const [users, setUsers] = useState(42);
+  const [memoryTotal, setMemoryTotal] = useState(8.0);
+  const [users, setUsers] = useState(1);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate live metrics
-      setCpu((prev) => {
-        const change = (Math.random() - 0.5) * 20;
-        const next = Math.max(10, Math.min(90, prev + change));
-        setCpuHistory((hist) => [...hist.slice(1), next]);
-        return next;
-      });
-      
-      setMemory((prev) => {
-        const change = (Math.random() - 0.5) * 0.4;
-        const next = Math.max(2.5, Math.min(7.2, prev + change));
-        return next;
-      });
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const eventSource = new EventSource(`${apiUrl}/api/telemetry`);
 
-      setUsers((prev) => {
-        if (Math.random() > 0.5) {
-          const change = Math.floor((Math.random() - 0.5) * 6);
-          return Math.max(15, prev + change);
-        }
-        return prev;
-      });
-    }, 1500);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        setCpu(data.cpu);
+        setCpuHistory((hist) => [...hist.slice(1), data.cpu]);
+        
+        setMemory(data.memoryUsed);
+        setMemoryTotal(data.memoryTotal);
+        setUsers(data.activeUsers);
+      } catch (err) {
+        console.error("Telemetry parse error", err);
+      }
+    };
 
-    return () => clearInterval(interval);
+    return () => eventSource.close();
   }, []);
 
   return (
@@ -94,12 +89,12 @@ export function LiveMetrics() {
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between text-text-muted">
               <span className="flex items-center gap-1"><Server className="w-3 h-3" /> MEM_USAGE</span>
-              <span className="text-purple-400 font-bold">{memory.toFixed(2)} GB / 8.0 GB</span>
+              <span className="text-purple-400 font-bold">{memory.toFixed(2)} GB / {memoryTotal.toFixed(1)} GB</span>
             </div>
             <div className="h-1.5 w-full bg-bg-secondary rounded-full overflow-hidden">
               <div 
                 className="h-full bg-purple-500 transition-all duration-1000 ease-out relative" 
-                style={{ width: `${(memory / 8) * 100}%` }}
+                style={{ width: `${(memory / memoryTotal) * 100}%` }}
               >
                 <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 animate-[pulse_2s_infinite]" />
               </div>
