@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Activity, Cpu, Server, Network } from "lucide-react";
 
 export function LiveMetrics() {
@@ -10,18 +10,6 @@ export function LiveMetrics() {
   const [memory, setMemory] = useState(0);
   const [memoryTotal, setMemoryTotal] = useState(8.0);
   const [users, setUsers] = useState(1);
-
-  const { scrollYProgress } = useScroll();
-
-  // Polished Scroll Transitions - Reveals happen smoothly as you scroll
-  const cpuOpacity = useTransform(scrollYProgress, [0.02, 0.1], [0, 1]);
-  const cpuY = useTransform(scrollYProgress, [0.02, 0.1], [15, 0]);
-
-  const memOpacity = useTransform(scrollYProgress, [0.15, 0.25], [0, 1]);
-  const memY = useTransform(scrollYProgress, [0.15, 0.25], [15, 0]);
-
-  const usersOpacity = useTransform(scrollYProgress, [0.3, 0.4], [0, 1]);
-  const usersY = useTransform(scrollYProgress, [0.3, 0.4], [15, 0]);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -67,7 +55,7 @@ export function LiveMetrics() {
         <div className="p-4 flex flex-col gap-5">
           
           {/* CPU Chart Section */}
-          <motion.div style={{ opacity: cpuOpacity, y: cpuY }} className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-[#8b949e]">
                 <Cpu className="w-3.5 h-3.5" />
@@ -102,10 +90,10 @@ export function LiveMetrics() {
                 />
               </svg>
             </div>
-          </motion.div>
+          </div>
 
           {/* Memory Allocation Section */}
-          <motion.div style={{ opacity: memOpacity, y: memY }} className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-[#8b949e]">
                 <Server className="w-3.5 h-3.5" />
@@ -123,10 +111,10 @@ export function LiveMetrics() {
                 style={{ width: `${(memory / memoryTotal) * 100}%` }}
               />
             </div>
-          </motion.div>
+          </div>
 
           {/* Active Connections Section */}
-          <motion.div style={{ opacity: usersOpacity, y: usersY }} className="flex items-center justify-between pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between pt-2 border-t border-white/5">
             <div className="flex items-center gap-1.5 text-[#8b949e]">
               <Network className="w-3.5 h-3.5" />
               <span className="text-[10px] uppercase tracking-wider font-semibold">TCP Connections</span>
@@ -134,7 +122,7 @@ export function LiveMetrics() {
             <div className="flex items-center justify-center h-5 px-2 bg-[#161b22] rounded border border-white/5">
               <span className="text-[10px] font-bold text-white">{users}</span>
             </div>
-          </motion.div>
+          </div>
 
         </div>
       </div>
