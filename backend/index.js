@@ -66,7 +66,12 @@ setInterval(() => {
     cpu: Math.max(0, Math.min(100, cpuData.percentage)),
     memoryUsed,
     memoryTotal,
-    activeUsers: clients.length
+    activeUsers: clients.length,
+    hostUptime: os.uptime(),
+    platform: `${os.platform()} ${os.arch()}`,
+    cpuCores: os.cpus().length,
+    heapUsed: process.memoryUsage().heapUsed / (1024 * 1024),
+    heapTotal: process.memoryUsage().heapTotal / (1024 * 1024)
   });
 
   clients.forEach(client => client.write(`data: ${data}\n\n`));
@@ -87,6 +92,6 @@ app.post('/api/contact', (req, res) => {
   res.status(200).json({ success: true, message: 'Message received successfully' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
