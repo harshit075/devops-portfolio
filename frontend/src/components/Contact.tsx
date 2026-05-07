@@ -12,18 +12,20 @@ export function Contact() {
     setStatus("submitting");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-      
       const payload = new FormData();
+      // Access Key from Web3Forms (User will put this in .env)
+      payload.append("access_key", import.meta.env.VITE_WEB3FORMS_KEY || "YOUR_ACCESS_KEY_HERE");
+      
       payload.append("name", formData.name);
       payload.append("email", formData.email);
       payload.append("subject", formData.subject);
       payload.append("message", formData.message);
+      
       if (attachment) {
         payload.append("attachment", attachment);
       }
 
-      const response = await fetch(`${apiUrl}/api/contact`, {
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         body: payload,
       });
