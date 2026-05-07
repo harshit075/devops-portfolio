@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Home, Briefcase, User, Code, Mail } from "lucide-react";
+import { Home, Briefcase, User, Code, Mail, Terminal } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -12,7 +12,7 @@ const navItems = [
   { id: "contact", label: "Contact", icon: Mail },
 ];
 
-export function Navbar() {
+export function Navbar({ onOpenCli }: { onOpenCli: () => void }) {
   const [activeSection, setActiveSection] = useState("hero");
 
   useEffect(() => {
@@ -84,6 +84,21 @@ export function Navbar() {
           </button>
         );
       })}
+      
+      {/* CLI Mode Toggle Button */}
+      <div className="hidden md:block w-8 h-[1px] bg-white/10 my-2" />
+      <button
+        onClick={onOpenCli}
+        className="relative group flex flex-col items-center p-3 outline-none"
+        title="CLI Mode"
+      >
+        <Terminal className="w-5 h-5 md:w-6 md:h-6 relative z-10 transition-colors duration-300 text-[#58a6ff] group-hover:text-cyan drop-shadow-[0_0_8px_rgba(88,166,255,0.5)]" />
+        
+        <span className="hidden md:block absolute left-full ml-6 px-3 py-1.5 bg-foreground text-background text-xs font-bold uppercase tracking-widest rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+          CLI Mode
+          <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-foreground" />
+        </span>
+      </button>
     </motion.nav>
   );
 }
