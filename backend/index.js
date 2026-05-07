@@ -82,14 +82,57 @@ app.get('/', (req, res) => {
   res.send('Server is running');
 });
 
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+
+// Configure multer for memory storage (we'll attach the buffer directly to the email)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
 // Contact form API
-app.post('/api/contact', (req, res) => {
-  const { name, email, message } = req.body;
+app.post('/api/contact', upload.single('attachment'), async (req, res) => {
+  const { name, email, subject, message } = req.body;
+  
   if (!name || !email || !message) {
-    return res.status(400).json({ error: 'All fields are required' });
+    return res.status(400).json({ error: 'Name, email, and message are required' });
   }
-  console.log('Received contact message:', { name, email, message });
-  res.status(200).json({ success: true, message: 'Message received successfully' });
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER || 'harshitborana75@gmail.com',
+        pass: process.env.EMAIL_PASS // App Password
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'harshitborana75@gmail.com',
+      to: 'harshitborana75@gmail.com',
+      subject: subject ? `Portfolio Contact: ${subject}` : `New Portfolio Contact from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject || 'N/A'}\n\nMessage:\n${message}`,
+      replyTo: email
+    };
+
+    // If there's an uploaded file, attach it
+    if (req.file) {
+      mailOptions.attachments = [
+        {
+          filename: req.file.originalname,
+          content: req.file.buffer
+        }
+      ];
+    }
+
+    await transporter.sendMail(mailOptions);
+    console.log('Successfully sent contact email from:', name);
+    res.status(200).json({ success: true, message: 'Message received successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
