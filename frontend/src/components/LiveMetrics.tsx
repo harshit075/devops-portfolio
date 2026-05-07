@@ -2,42 +2,78 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Cpu, Server, Network, X, Maximize2, HardDrive, Terminal } from "lucide-react";
+import { Activity, Cpu, Network, X, Maximize2, Terminal } from "lucide-react";
 
 export function LiveMetrics() {
   const [cpu, setCpu] = useState(0);
   const [cpuHistory, setCpuHistory] = useState<number[]>(Array(60).fill(0));
-  const [memory, setMemory] = useState(0);
-  const [memoryTotal, setMemoryTotal] = useState(8.0);
-  const [users, setUsers] = useState(1);
-  const [hostUptime, setHostUptime] = useState(0);
+  const [memoryUsed, setMemoryUsed] = useState(0);
+  const [memoryTotal, setMemoryTotal] = useState(0);
+  const [sessionUptime, setSessionUptime] = useState(0);
   const [platform, setPlatform] = useState("Unknown");
   const [cpuCores, setCpuCores] = useState(0);
-  const [heapUsed, setHeapUsed] = useState(0);
-  const [heapTotal, setHeapTotal] = useState(0);
+  const [networkType, setNetworkType] = useState("Unknown");
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-    const eventSource = new EventSource(`${apiUrl}/api/telemetry`);
+    // Set static client specs
+    setPlatform(navigator.platform || "Unknown");
+    setCpuCores(navigator.hardwareConcurrency || 0);
+    
+    const conn = (navigator as any).connection;
+    if (conn) {
+      setNetworkType(`${conn.effectiveType?.toUpperCase() || 'WIFI'} (${conn.downlink || 0} Mbps)`);
+    }
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setCpu(data.cpu);
-        setCpuHistory((hist) => [...hist.slice(1), data.cpu]);
-        setMemory(data.memoryUsed);
-        setMemoryTotal(data.memoryTotal);
-        setUsers(data.activeUsers);
-        setHostUptime(data.hostUptime || 0);
-        setPlatform(data.platform || "Unknown");
-        setCpuCores(data.cpuCores || 0);
-        setHeapUsed(data.heapUsed || 0);
-        setHeapTotal(data.heapTotal || 0);
-      } catch (err) {}
+    // FPS-based CPU Estimation
+    let frameCount = 0;
+    let lastTime = performance.now();
+    let animationFrameId: number;
+
+    const measureFPS = (time: number) => {
+      frameCount++;
+      const elapsed = time - lastTime;
+      
+      if (elapsed >= 1000) {
+        const fps = (frameCount * 1000) / elapsed;
+        
+        // Estimate CPU load: if 60fps -> ~5-15% idle load. If drops -> higher load.
+        const baseLoad = 5 + Math.random() * 10;
+        const loadFromFrameDrops = Math.max(0, (60 - fps) * 2.5); // 30fps drop = +75% load
+        const estimatedCpu = Math.min(100, baseLoad + loadFromFrameDrops);
+        
+        setCpu(estimatedCpu);
+        setCpuHistory(prev => [...prev.slice(1), estimatedCpu]);
+        
+        // Memory (Chrome only, fallback to mock if unsupported)
+        const mem = (performance as any).memory;
+        if (mem) {
+          setMemoryUsed(mem.usedJSHeapSize / 1048576); // MB
+          setMemoryTotal(mem.jsHeapSizeLimit / 1048576); // MB
+        } else {
+          // Mock memory if Firefox/Safari
+          setMemoryUsed(50 + Math.random() * 20);
+          setMemoryTotal(2048);
+        }
+
+        frameCount = 0;
+        lastTime = time;
+      }
+      animationFrameId = requestAnimationFrame(measureFPS);
     };
+    
+    animationFrameId = requestAnimationFrame(measureFPS);
 
-    return () => eventSource.close();
+    // Session Uptime
+    const startTime = Date.now();
+    const intervalId = setInterval(() => {
+      setSessionUptime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
@@ -58,7 +94,7 @@ export function LiveMetrics() {
           <div className="px-4 py-3 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Activity className="w-3.5 h-3.5 text-[#58a6ff]" />
-              <span className="text-[11px] font-bold text-[#c9d1d9] tracking-widest uppercase">System</span>
+              <span className="text-[11px] font-bold text-[#c9d1d9] tracking-widest uppercase">Client Metrics</span>
             </div>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#3fb950]/20 bg-[#3fb950]/5">
               <div className="w-1.5 h-1.5 rounded-full bg-[#3fb950] animate-pulse shadow-[0_0_5px_rgba(63,185,80,0.8)]" />
@@ -72,7 +108,7 @@ export function LiveMetrics() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-[#8b949e]">
                   <Cpu className="w-3.5 h-3.5" />
-                  <span className="text-[10px] uppercase tracking-wider font-semibold">CPU Usage</span>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold">Local CPU Est.</span>
                 </div>
                 <span className="text-xs font-bold text-white">{cpu.toFixed(1)}%</span>
               </div>
@@ -94,15 +130,15 @@ export function LiveMetrics() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-[#8b949e]">
-                  <Server className="w-3.5 h-3.5" />
-                  <span className="text-[10px] uppercase tracking-wider font-semibold">Memory Alloc</span>
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span className="text-[10px] uppercase tracking-wider font-semibold">JS Heap</span>
                 </div>
                 <span className="text-[10px] text-white">
-                  <span className="font-bold text-[#d2a8ff]">{memory.toFixed(2)}</span> / {memoryTotal.toFixed(1)} GB
+                  <span className="font-bold text-[#3fb950]">{memoryUsed.toFixed(0)}</span> MB
                 </span>
               </div>
               <div className="h-1.5 w-full bg-[#161b22] rounded-full overflow-hidden flex">
-                <div className="h-full bg-[#d2a8ff] shadow-[0_0_8px_rgba(210,168,255,0.4)] transition-all duration-1000 ease-out" style={{ width: `${(memory / memoryTotal) * 100}%` }} />
+                <div className="h-full bg-[#3fb950] shadow-[0_0_8px_rgba(63,185,80,0.4)] transition-all duration-1000 ease-out" style={{ width: memoryTotal ? `${(memoryUsed / memoryTotal) * 100}%` : '0%' }} />
               </div>
             </div>
           </div>
@@ -131,12 +167,12 @@ export function LiveMetrics() {
               <div className="px-6 py-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Activity className="w-5 h-5 text-[#58a6ff]" />
-                  <h2 className="text-sm md:text-base font-bold text-[#c9d1d9] tracking-widest uppercase">Datadog-Style Telemetry</h2>
+                  <h2 className="text-sm md:text-base font-bold text-[#c9d1d9] tracking-widest uppercase">Client Telemetry</h2>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded border border-[#3fb950]/20 bg-[#3fb950]/5">
                     <div className="w-2 h-2 rounded-full bg-[#3fb950] animate-pulse shadow-[0_0_8px_rgba(63,185,80,0.8)]" />
-                    <span className="text-[10px] font-bold text-[#3fb950] tracking-widest uppercase">Active Stream</span>
+                    <span className="text-[10px] font-bold text-[#3fb950] tracking-widest uppercase">Local Stream</span>
                   </div>
                   <button onClick={() => setIsExpanded(false)} className="text-[#8b949e] hover:text-white transition-colors p-1 bg-white/5 rounded hover:bg-white/10">
                     <X className="w-5 h-5" />
@@ -153,7 +189,7 @@ export function LiveMetrics() {
                   <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-2 text-[#8b949e]">
                       <Cpu className="w-5 h-5" />
-                      <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Host CPU Utilization</span>
+                      <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Estimated CPU Utilization</span>
                     </div>
                     <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{cpu.toFixed(1)}%</span>
                   </div>
@@ -171,81 +207,46 @@ export function LiveMetrics() {
                   </div>
                 </div>
 
-                {/* Large Memory Allocation */}
-                <div className="lg:col-span-2 bg-black/40 border border-white/5 rounded-xl p-5 md:p-6 flex flex-col justify-center gap-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-[#8b949e]">
-                      <Server className="w-5 h-5" />
-                      <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Memory Allocation</span>
-                    </div>
-                    <span className="text-sm text-white font-bold">
-                      <span className="text-[#d2a8ff] text-xl">{memory.toFixed(2)}</span> / {memoryTotal.toFixed(1)} GB
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="h-6 w-full bg-[#161b22] rounded-md overflow-hidden flex relative border border-white/5">
-                      <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/50 z-10 mix-blend-difference">
-                        {((memory / memoryTotal) * 100).toFixed(1)}% USED
-                      </div>
-                      <div className="h-full bg-gradient-to-r from-[#8957e5] to-[#d2a8ff] shadow-[0_0_15px_rgba(210,168,255,0.5)] transition-all duration-1000 ease-out" style={{ width: `${(memory / memoryTotal) * 100}%` }} />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-[#8b949e]">
-                      <span>0 GB</span>
-                      <span>{memoryTotal.toFixed(1)} GB</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* TCP Connections */}
-                <div className="lg:col-span-1 bg-black/40 border border-white/5 rounded-xl p-5 md:p-6 flex flex-col items-center justify-center gap-4 relative">
-                  <div className="flex items-center gap-2 text-[#8b949e]">
-                    <Network className="w-5 h-5" />
-                    <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Live Users</span>
-                  </div>
-                  <div className="w-32 h-32 rounded-full border-[4px] border-[#3fb950]/20 flex items-center justify-center relative">
-                    <div className="absolute inset-0 rounded-full border-[4px] border-[#3fb950] border-t-transparent animate-spin" style={{ animationDuration: '3s' }} />
-                    <span className="text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(63,185,80,0.5)]">{users}</span>
-                  </div>
-                  <span className="text-[10px] text-[#8b949e] uppercase tracking-widest text-center mt-2">Active TCP WebSocket<br/>Connections</span>
-                </div>
-
                 {/* Node.js Heap Memory */}
                 <div className="lg:col-span-2 bg-black/40 border border-white/5 rounded-xl p-5 md:p-6 flex flex-col justify-center gap-6 relative">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-[#8b949e]">
                       <Terminal className="w-5 h-5" />
-                      <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Node.js V8 Heap</span>
+                      <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Browser JS Heap (Client)</span>
                     </div>
                     <span className="text-sm text-white font-bold">
-                      <span className="text-[#3fb950] text-xl">{heapUsed.toFixed(1)}</span> / {heapTotal.toFixed(1)} MB
+                      <span className="text-[#3fb950] text-xl">{memoryUsed.toFixed(1)}</span> / {memoryTotal > 0 ? memoryTotal.toFixed(0) : '2048'} MB
                     </span>
                   </div>
                   
                   <div className="flex flex-col gap-2">
                     <div className="h-6 w-full bg-[#161b22] rounded-md overflow-hidden flex relative border border-white/5">
-                      <div className="h-full bg-gradient-to-r from-[#2ea043] to-[#3fb950] shadow-[0_0_15px_rgba(63,185,80,0.5)] transition-all duration-1000 ease-out" style={{ width: heapTotal ? `${(heapUsed / heapTotal) * 100}%` : '0%' }} />
+                      <div className="h-full bg-gradient-to-r from-[#2ea043] to-[#3fb950] shadow-[0_0_15px_rgba(63,185,80,0.5)] transition-all duration-1000 ease-out" style={{ width: memoryTotal ? `${(memoryUsed / memoryTotal) * 100}%` : '0%' }} />
                     </div>
                   </div>
                 </div>
 
-                {/* Host Specs */}
+                {/* Network / Client Specs */}
                 <div className="lg:col-span-1 bg-black/40 border border-white/5 rounded-xl p-5 md:p-6 flex flex-col justify-center gap-4 relative">
                   <div className="flex items-center gap-2 text-[#8b949e] mb-2">
-                    <HardDrive className="w-5 h-5" />
-                    <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Host Server</span>
+                    <Network className="w-5 h-5" />
+                    <span className="text-xs md:text-sm uppercase tracking-wider font-bold">Client Info</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#8b949e] uppercase tracking-wider">Network</span>
+                    <span className="text-white font-bold">{networkType}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-[#8b949e] uppercase tracking-wider">Architecture</span>
-                    <span className="text-white font-bold">{platform}</span>
+                    <span className="text-white font-bold truncate max-w-[100px] text-right">{platform}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-[#8b949e] uppercase tracking-wider">Logical Cores</span>
                     <span className="text-white font-bold">{cpuCores} vCPUs</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-[#8b949e] uppercase tracking-wider">Uptime</span>
-                    <span className="text-[#58a6ff] font-bold">{Math.floor(hostUptime / 3600)}h {Math.floor((hostUptime % 3600) / 60)}m</span>
+                    <span className="text-[#8b949e] uppercase tracking-wider">Session Time</span>
+                    <span className="text-[#58a6ff] font-bold">{Math.floor(sessionUptime / 60)}m {sessionUptime % 60}s</span>
                   </div>
                 </div>
 

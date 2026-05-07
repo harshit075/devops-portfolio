@@ -11,6 +11,7 @@ import { Contact } from "@/components/Contact";
 import { Navbar } from "@/components/Navbar";
 import { LiveMetrics } from "@/components/LiveMetrics";
 import { PipelineLoader } from "@/components/PipelineLoader";
+import { CarGame } from "@/components/CarGame";
 
 export default function App() {
   const [isPipelineComplete, setIsPipelineComplete] = useState(false);
@@ -33,6 +34,7 @@ export default function App() {
         <Skills />
         <GithubSnake />
         <Contact />
+        <CarGame />
         <Footer />
       </div>
     </main>

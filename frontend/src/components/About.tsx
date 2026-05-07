@@ -53,14 +53,23 @@ export function About() {
               When I&apos;m not configuring servers or writing scripts, I&apos;m usually exploring new tech or preparing for my next big challenge. Feel free to connect with me!
             </p>
 
-            <div className="pt-8">
+            <div className="pt-8 flex flex-col space-y-6">
               <a
                 href="https://www.linkedin.com/in/harshit-borana-🇮🇳-3a685a257/"
                 target="_blank"
                 rel="noreferrer"
-                className="group relative inline-flex items-center gap-4 text-xl font-bold uppercase tracking-widest"
+                className="group relative inline-flex items-center gap-4 text-xl font-bold uppercase tracking-widest self-start"
               >
                 <span className="relative z-10 transition-colors group-hover:text-cyan">Connect on LinkedIn</span>
+                <ArrowUpRight className="w-8 h-8 relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform group-hover:text-cyan" />
+                <div className="absolute bottom-0 left-0 w-full h-[3px] bg-foreground group-hover:bg-cyan transition-colors" />
+              </a>
+
+              <a
+                href="mailto:harshitborana2@gmail.com"
+                className="group relative inline-flex items-center gap-4 text-xl font-bold tracking-widest self-start"
+              >
+                <span className="relative z-10 transition-colors group-hover:text-cyan lowercase">harshitborana2@gmail.com</span>
                 <ArrowUpRight className="w-8 h-8 relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform group-hover:text-cyan" />
                 <div className="absolute bottom-0 left-0 w-full h-[3px] bg-foreground group-hover:bg-cyan transition-colors" />
               </a>
