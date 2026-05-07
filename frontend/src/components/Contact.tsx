@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Rocket, Paperclip } from "lucide-react";
+import { Rocket, Paperclip } from "lucide-react";
 
 export function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
