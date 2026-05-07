@@ -41,6 +41,9 @@ export function CliMode({ onClose }: { onClose: () => void }) {
     
     if (!cmd) return;
 
+    // Play "Enter" key sound
+    playMechanicalClick(0.3);
+
     let output: React.ReactNode = "";
     let nextDir = currentDir;
 
@@ -151,6 +154,37 @@ export function CliMode({ onClose }: { onClose: () => void }) {
     setCurrentDir(nextDir);
   };
 
+  const playMechanicalClick = (volume = 0.1) => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!audioCtx) return;
+      
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      osc.type = "square";
+      // Randomize pitch slightly for realism
+      osc.frequency.setValueAtTime(150 + Math.random() * 50, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.05);
+      
+      gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+      
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    } catch (e) {
+      // Ignore audio errors (e.g. autoplay restrictions)
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    playMechanicalClick();
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -211,7 +245,7 @@ export function CliMode({ onClose }: { onClose: () => void }) {
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               className="flex-1 bg-transparent border-none outline-none text-[#c9d1d9] caret-white"
               autoFocus
               autoComplete="off"

@@ -15,13 +15,15 @@ import { CarGame } from "@/components/CarGame";
 import { StatusPage } from "@/components/StatusPage";
 import { ExperienceTimeline } from "@/components/ExperienceTimeline";
 import { CliMode } from "@/components/CliMode";
+import { Cursor } from "@/components/Cursor";
 
 export default function App() {
   const [isPipelineComplete, setIsPipelineComplete] = useState(false);
   const [isCliMode, setIsCliMode] = useState(false);
 
   return (
-    <main className="flex flex-col min-h-screen selection:bg-cyan-500 selection:text-black font-sans bg-background relative">
+    <main className="flex flex-col min-h-screen selection:bg-[#58a6ff] selection:text-black font-sans bg-background relative overflow-x-hidden">
+      <Cursor />
       <AnimatePresence>
         {!isPipelineComplete && (
           <PipelineLoader onComplete={() => setIsPipelineComplete(true)} />

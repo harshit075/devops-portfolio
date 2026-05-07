@@ -2,8 +2,9 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Download } from "lucide-react";
 import profileImage from "@/assests/1 (1).jpeg";
+import resumePdf from "@/assests/resume.pdf";
 
 export function About() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,10 +56,20 @@ export function About() {
 
             <div className="pt-8 flex flex-col space-y-6">
               <a
+                href={resumePdf}
+                download="Harshit_Borana_Resume.pdf"
+                className="group relative inline-flex items-center gap-4 text-xl font-bold uppercase tracking-widest self-start text-cyan drop-shadow-[0_0_8px_rgba(0,255,255,0.4)]"
+              >
+                <span className="relative z-10 transition-colors group-hover:text-white">Download Resume</span>
+                <Download className="w-8 h-8 relative z-10 group-hover:translate-y-1 transition-transform group-hover:text-white" />
+                <div className="absolute bottom-0 left-0 w-full h-[3px] bg-cyan group-hover:bg-white transition-colors" />
+              </a>
+
+              <a
                 href="https://www.linkedin.com/in/harshit-borana-🇮🇳-3a685a257/"
                 target="_blank"
                 rel="noreferrer"
-                className="group relative inline-flex items-center gap-4 text-xl font-bold uppercase tracking-widest self-start"
+                className="group relative inline-flex items-center gap-4 text-xl font-bold uppercase tracking-widest self-start mt-2"
               >
                 <span className="relative z-10 transition-colors group-hover:text-cyan">Connect on LinkedIn</span>
                 <ArrowUpRight className="w-8 h-8 relative z-10 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform group-hover:text-cyan" />

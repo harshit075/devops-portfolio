@@ -53,6 +53,11 @@ body {
   color: var(--foreground);
   scroll-behavior: smooth;
   transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: none;
+}
+
+a, button, input, textarea, select, [role="button"] {
+  cursor: none !important;
 }
 
 ::selection {
