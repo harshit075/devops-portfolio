@@ -46,8 +46,8 @@ export function AdminAccess() {
   const [error, setError] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Read PIN from env or default to the provided password
-  const correctPin = import.meta.env.VITE_ADMIN_PIN || '987654321';
+  // Admin PIN
+  const correctPin = '987654321';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
