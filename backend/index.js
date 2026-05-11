@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const os = require('os');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
@@ -132,6 +133,180 @@ app.post('/api/contact', upload.single('attachment'), async (req, res) => {
   } catch (error) {
     console.error('Error sending email:', error);
     res.status(500).json({ error: 'Failed to send email' });
+  }
+});
+
+// Database connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+pool.connect()
+  .then(() => console.log('Connected to PostgreSQL database'))
+  .catch(err => console.error('Database connection error:', err));
+
+// DB Test Endpoint
+app.get('/api/db-status', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ status: 'connected', time: result.rows[0].now });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
+// --- ADMIN DASHBOARD APIs ---
+
+// Todos
+app.get('/api/admin/todos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM todos ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.post('/api/admin/todos', async (req, res) => {
+  try {
+    const { text, priority } = req.body;
+    const result = await pool.query('INSERT INTO todos (text, priority) VALUES ($1, $2) RETURNING *', [text, priority || 'normal']);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.put('/api/admin/todos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('UPDATE todos SET done = NOT done WHERE id = $1 RETURNING *', [id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.delete('/api/admin/todos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM todos WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Diary
+app.get('/api/admin/diary', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM diary_entries ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.post('/api/admin/diary', async (req, res) => {
+  try {
+    const { date, content } = req.body;
+    const result = await pool.query('INSERT INTO diary_entries (date, content) VALUES ($1, $2) RETURNING *', [date, content]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Goals
+app.get('/api/admin/goals', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM goals ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.post('/api/admin/goals', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const result = await pool.query('INSERT INTO goals (text) VALUES ($1) RETURNING *', [text]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.put('/api/admin/goals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { progress } = req.body;
+    const result = await pool.query('UPDATE goals SET progress = $1 WHERE id = $2 RETURNING *', [progress, id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.delete('/api/admin/goals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM goals WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Notes
+app.get('/api/admin/notes', async (req, res) => {
+  try {
+    const result = await pool.query("SELECT value FROM settings WHERE key = 'important_note'");
+    res.json({ note: result.rows.length ? result.rows[0].value : '' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.post('/api/admin/notes', async (req, res) => {
+  try {
+    const { content } = req.body;
+    await pool.query("INSERT INTO settings (key, value) VALUES ('important_note', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [content]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stats
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const todosTotal = await pool.query('SELECT COUNT(*) FROM todos');
+    const todosDone = await pool.query('SELECT COUNT(*) FROM todos WHERE done = true');
+    const diaryCount = await pool.query('SELECT COUNT(*) FROM diary_entries');
+    const goalsData = await pool.query('SELECT AVG(progress) as avg_progress, COUNT(*) as total FROM goals');
+    res.json({
+      todos: { total: parseInt(todosTotal.rows[0].count), done: parseInt(todosDone.rows[0].count) },
+      diary: { total: parseInt(diaryCount.rows[0].count) },
+      goals: { total: parseInt(goalsData.rows[0].total), avgProgress: Math.round(parseFloat(goalsData.rows[0].avg_progress) || 0) }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete diary entry
+app.delete('/api/admin/diary/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM diary_entries WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update todo priority
+app.patch('/api/admin/todos/:id/priority', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { priority } = req.body;
+    const result = await pool.query('UPDATE todos SET priority = $1 WHERE id = $2 RETURNING *', [priority, id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
